@@ -10,7 +10,6 @@ const loadinn_slip_valid = () => {
     check("freight", "freight is required").not().isEmpty(),
     check("from", "from is required").not().isEmpty(),
     check("to", "to is required").not().isEmpty(),
-    check("size", "size is required").not().isEmpty(),
     check("l", "l is required").not().isEmpty(),
     check("w", "w is required").not().isEmpty(),
     check("h", "h is required").not().isEmpty(),

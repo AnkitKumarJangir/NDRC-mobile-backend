@@ -8,7 +8,7 @@ router.use((req, res, next) => {
   if (!token) {
     return res.status(403).send({ message: "No authorization provided!" });
   }
-  jwt.verify(token, "ndrc.transport@fbd#7526", (err, decoded) => {
+  jwt.verify(token, process.env.JWT_SECRET_KEY, (err, decoded) => {
     if (err) {
       return res.status(401).send({ message: "Unauthorized!" });
     }

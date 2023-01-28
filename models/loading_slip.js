@@ -21,7 +21,6 @@ const loadingSlip = mongoose.model("loadingSlip", {
   guarantee: { type: String },
   advance: { type: Number },
   balance: { type: Number },
-  balance: { type: Number },
   created_date: { type: String },
   updated_date: { type: String },
   created_by: { type: String },

@@ -1,8 +1,9 @@
 const loadingSlip = require("../models/loading_slip");
 const { validationResult } = require("express-validator");
+const auth = require("./auth");
 const moment = require("moment");
 // create new slip
-const createLoadingSlip = (req, res, next) => {
+async function createLoadingSlip(req, res, next) {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).json({
@@ -11,6 +12,7 @@ const createLoadingSlip = (req, res, next) => {
       }),
     });
   } else {
+    const user = await auth.getUserBytoken(req.headers.authorization);
     let clt = new loadingSlip({
       s_no: req.body.s_no,
       date: req.body.date,
@@ -34,17 +36,18 @@ const createLoadingSlip = (req, res, next) => {
       balance: req.body.balance,
       created_date: moment().format("YYYY-MM-DD"),
       updated_date: moment().format("YYYY-MM-DD"),
-      created_by: req.body.user_name,
+      created_by: user ? user.username : "",
     });
+
     clt.save((err, doc) => {
       if (err) {
         res.status(400).send({ message: err });
       } else {
-        res.send({ message: "successfully created" });
+        res.send({ message: "successfully created", id: doc._id });
       }
     });
   }
-};
+}
 // get All slips
 const getLoadingSlips = (req, res) => {
   loadingSlip.find((err, doc) => {
@@ -57,6 +60,7 @@ const getLoadingSlips = (req, res) => {
 };
 // single get
 const getSingleLoadingSlips = (req, res) => {
+  console.log(req);
   loadingSlip.findOne({ _id: req.params.id }, (err, doc) => {
     if (err) {
       return res.status(400).send({ message: "Not found" });
@@ -67,6 +71,7 @@ const getSingleLoadingSlips = (req, res) => {
 };
 // update one
 const updateLoadingSlips = (req, res) => {
+  console.log(req);
   if (req.params.id) {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -109,7 +114,7 @@ const updateLoadingSlips = (req, res) => {
           if (err) {
             return res.status(400).send({ message: "Not found" });
           } else {
-            res.send({ message: "updated successfully" });
+            res.send({ message: "updated successfully", id: doc._id });
           }
         }
       );
