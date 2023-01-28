@@ -1,10 +1,10 @@
 const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
+dotenv.config();
 const mongoose = require("./db.js");
 const loadingSliproutes = require("./routers/loading_slip");
 const authRoutes = require("./routers/auth");
-dotenv.config();
 const app = express();
 var corsOptions = {
   origin: "http://localhost:4200",
