@@ -80,6 +80,43 @@ const changePassword = async (req, res) => {
     });
   }
 };
+const getUser = async (req, res) => {
+  const user = await getUserBytoken(req.headers.authorization);
+  if (!user) {
+    return res.status(400).send({
+      message: "Not found",
+    });
+  }
+  res.status(200).send({
+    id: user._id,
+    username: user.username,
+    email: user.email,
+    first_name: user.first_name,
+    last_name: user.last_name,
+    mobile: user.mobile,
+  });
+};
+const updateUserProfile = async (req, res) => {
+  const user = await getUserBytoken(req.headers.authorization);
+  if (!user) {
+    return res.status(400).send({
+      message: "Not found",
+    });
+  }
+  let payload = { ...req.body };
+  login.findByIdAndUpdate(
+    { _id: user._id },
+    { $set: payload },
+    { new: true },
+    (err, doc) => {
+      if (err) {
+        return res.status(400).send({ message: "Not found" });
+      } else {
+        res.send({ message: "Profile updated successfully" });
+      }
+    }
+  );
+};
 async function getUserBytoken(token) {
   let userId;
   let doc;
@@ -111,4 +148,10 @@ async function getUserBytoken(token) {
   // return null;
 }
 
-module.exports = { loginUser, getUserBytoken, changePassword };
+module.exports = {
+  loginUser,
+  getUserBytoken,
+  changePassword,
+  getUser,
+  updateUserProfile,
+};

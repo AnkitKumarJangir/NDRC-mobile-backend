@@ -51,5 +51,7 @@ router.post(
   loadinn_slip_validation.changePassword_valid(),
   auth.changePassword
 );
+router.get("/get-user-details", auth.getUser);
+router.put("/update-profile", auth.updateUserProfile);
 
 module.exports = router;
