@@ -18,4 +18,10 @@ const loadinn_slip_valid = () => {
     check("balance", "balance is required").not().isEmpty(),
   ];
 };
-module.exports = { loadinn_slip_valid };
+const changePassword_valid = () => {
+  return [
+    check("old_password", "old_password required").notEmpty(),
+    check("new_password", "new_password required").notEmpty(),
+  ];
+};
+module.exports = { loadinn_slip_valid, changePassword_valid };

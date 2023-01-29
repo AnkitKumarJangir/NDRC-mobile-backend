@@ -4,6 +4,7 @@ const cors = require("cors");
 const jwt = require("jsonwebtoken");
 const loadinn_slip_validation = require("../validations/loading-slip");
 const loading_slip_controller = require("../controllers/loading_slip");
+const auth = require("../controllers/auth");
 var corsOptions = {
   origin: "*",
 };
@@ -44,6 +45,11 @@ router.post(
   "/create-loading-slip",
   loadinn_slip_validation.loadinn_slip_valid(),
   loading_slip_controller.createLoadingSlip
+);
+router.post(
+  "/change-password",
+  loadinn_slip_validation.changePassword_valid(),
+  auth.changePassword
 );
 
 module.exports = router;

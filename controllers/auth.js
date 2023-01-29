@@ -28,10 +28,55 @@ const loginUser = (req, res, next) => {
       var token = jwt.sign({ id: user.id }, process.env.JWT_SECRET_KEY, {
         expiresIn: 86400, // 24 hours
       });
+      delete user["password"];
       res.status(200).send({
         data: user,
         token: token,
       });
+    });
+  }
+};
+const changePassword = async (req, res) => {
+  const errors = validationResult(req);
+
+  if (req.headers.authorization) {
+    const user = await getUserBytoken(req.headers.authorization);
+    console.log(user);
+    if (!user) {
+      return;
+    }
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        errors: errors.array().map((d) => {
+          return { message: d.msg };
+        }),
+      });
+    } else {
+      if (req.body.old_password == user.password) {
+        let payload = {
+          password: req.body.new_password,
+        };
+        login.findByIdAndUpdate(
+          { _id: user._id },
+          { $set: payload },
+          { new: true },
+          (err, doc) => {
+            if (err) {
+              return res.status(400).send({ message: "Not found" });
+            } else {
+              res.send({ message: "Password updated successfully" });
+            }
+          }
+        );
+      } else {
+        res.send({
+          message: "Old password must be match",
+        });
+      }
+    }
+  } else {
+    res.status(400).send({
+      message: "No Authorization provided",
     });
   }
 };
@@ -66,4 +111,4 @@ async function getUserBytoken(token) {
   // return null;
 }
 
-module.exports = { loginUser, getUserBytoken };
+module.exports = { loginUser, getUserBytoken, changePassword };
