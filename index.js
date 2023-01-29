@@ -2,15 +2,15 @@ const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
 dotenv.config();
-const mongoose = require("./db.js");
+// const mongoose = require("./db.js");
 const loadingSliproutes = require("./routers/loading_slip");
 const authRoutes = require("./routers/auth");
 const app = express();
-var corsOptions = {
-  origin: "http://localhost:4200",
-};
+// var corsOptions = {
+//   origin: "http://localhost:4200",
+// };
 
-app.use(cors(corsOptions));
+// app.use(cors(corsOptions));
 // parse requests of content-type - application/json
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -23,16 +23,22 @@ app.use(baseURL, loadingSliproutes, (req, res) => {});
 app.all("*", (req, res) => {
   res.json({ "every thing": "is awesome" });
 });
-app.use((err, req, res, next) => {
-  // console.log(err);
-  err.statusCode = err.statusCode || 500;
-  err.message = err.message || "Internal Server Error";
-  res.status(err.statusCode).json({
-    message: err.message,
-  });
-});
+
+const PORT = process.env.PORT || 3000;
+
+const connectDB = async () => {
+  try {
+    const conn = await mongoose.connect(process.env.MONGO_URL);
+    console.log(`MongoDB Connected: ${conn.connection.host}`);
+  } catch (error) {
+    console.log(error);
+    process.exit(1);
+  }
+};
+
 // set port, listen for requests
-const PORT = process.env.PORT || 8080;
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}.`);
+connectDB().then(() => {
+  app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}.`);
+  });
 });
