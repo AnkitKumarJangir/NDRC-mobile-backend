@@ -20,7 +20,7 @@ app.use(baseURL + "/auth", authRoutes, (req, res) => {});
 app.use(baseURL, loadingSliproutes, (req, res) => {});
 // error handler
 const PORT = process.env.PORT || 3000;
-
+// log
 const connectDB = async () => {
   try {
     const conn = await mongoose.connect(process.env.MONGO_URL);
