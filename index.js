@@ -2,7 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
 dotenv.config();
-// const mongoose = require("./db.js");
+const mongoose = require("mongoose");
 const loadingSliproutes = require("./routers/loading_slip");
 const authRoutes = require("./routers/auth");
 const app = express();
