@@ -7,8 +7,11 @@ const loadingSliproutes = require("./routers/loading_slip");
 const authRoutes = require("./routers/auth");
 const app = express();
 var corsOptions = {
-  origin: "http://localhost:4200",
-  origin: "https://ndrc-mobile.cyclic.app",
+  origin: "*",
+
+  methods: ["GET", "POST"],
+
+  allowedHeaders: ["Content-Type"],
 };
 
 app.use(cors(corsOptions));
