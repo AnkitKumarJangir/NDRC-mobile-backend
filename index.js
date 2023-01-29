@@ -12,21 +12,13 @@ const app = express();
 
 // app.use(cors(corsOptions));
 // parse requests of content-type - application/json
-// app.use(express.json());
-// app.use(express.urlencoded({ extended: true }));
-// // simple route
-// baseURL = "/api";
-// app.use(baseURL + "/auth", authRoutes, (req, res) => {});
-// app.use(baseURL, loadingSliproutes, (req, res) => {});
-// // error handler
-// //Routes go here
-// app.all("*", (req, res) => {
-//   res.json({ "every thing": "is awesome" });
-// });
-app.all("/", (req, res) => {
-  console.log("Just got a request!");
-  res.send("Yo! hhh");
-});
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+// simple route
+baseURL = "/api";
+app.use(baseURL + "/auth", authRoutes, (req, res) => {});
+app.use(baseURL, loadingSliproutes, (req, res) => {});
+// error handler
 const PORT = process.env.PORT || 3000;
 
 const connectDB = async () => {
