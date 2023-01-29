@@ -19,6 +19,10 @@ baseURL = "/api";
 app.use(baseURL + "/auth", authRoutes, (req, res) => {});
 app.use(baseURL, loadingSliproutes, (req, res) => {});
 // error handler
+//Routes go here
+app.all("*", (req, res) => {
+  res.json({ "every thing": "is awesome" });
+});
 app.use((err, req, res, next) => {
   // console.log(err);
   err.statusCode = err.statusCode || 500;
