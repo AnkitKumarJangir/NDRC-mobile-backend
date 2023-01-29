@@ -1,8 +1,18 @@
 const express = require("express");
 const router = express.Router();
+const cors = require("cors");
 const jwt = require("jsonwebtoken");
 const loadinn_slip_validation = require("../validations/loading-slip");
 const loading_slip_controller = require("../controllers/loading_slip");
+var corsOptions = {
+  origin: "*",
+
+  methods: ["GET", "POST", "PUT", "DELETE"],
+
+  allowedHeaders: ["Content-Type"],
+};
+
+router.use(cors(corsOptions));
 router.use((req, res, next) => {
   let token = req.headers.authorization;
   if (!token) {
