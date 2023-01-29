@@ -69,7 +69,7 @@ const changePassword = async (req, res) => {
           }
         );
       } else {
-        res.send({
+        res.status(400).send({
           message: "Old password must be match",
         });
       }
