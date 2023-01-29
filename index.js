@@ -8,10 +8,6 @@ const authRoutes = require("./routers/auth");
 const app = express();
 var corsOptions = {
   origin: "*",
-
-  methods: ["GET", "POST", "PUT", "DELETE"],
-
-  allowedHeaders: ["Content-Type"],
 };
 
 app.use(cors(corsOptions));
