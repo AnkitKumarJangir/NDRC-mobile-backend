@@ -6,11 +6,12 @@ var mongoose = require("mongoose");
 const loadingSliproutes = require("./routers/loading_slip");
 const authRoutes = require("./routers/auth");
 const app = express();
-// var corsOptions = {
-//   origin: "http://localhost:4200",
-// };
+var corsOptions = {
+  origin: "http://localhost:4200",
+  origin: "https://ndrc-mobile.cyclic.app",
+};
 
-// app.use(cors(corsOptions));
+app.use(cors(corsOptions));
 // parse requests of content-type - application/json
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
