@@ -11,7 +11,7 @@ const loginUser = (req, res, next) => {
       }),
     });
   } else {
-    login.findOne({ username: req.body.username }).exec((err, user) => {
+    login.findOne({ username: req.body.username.trim() }).exec((err, user) => {
       if (err) {
         res.status(500).send({ message: err });
         return;
