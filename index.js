@@ -23,7 +23,10 @@ app.use(baseURL, loadingSliproutes, (req, res) => {});
 app.all("*", (req, res) => {
   res.json({ "every thing": "is awesome" });
 });
-
+app.all("/", (req, res) => {
+  console.log("Just got a request!");
+  res.send("Yo! hhh");
+});
 const PORT = process.env.PORT || 3000;
 
 const connectDB = async () => {
