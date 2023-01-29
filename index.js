@@ -21,7 +21,7 @@ app.use(express.urlencoded({ extended: true }));
 // simple route
 baseURL = "/api";
 app.use(baseURL + "/auth", authRoutes, (req, res) => {});
-app.use(baseURL + "/v1", loadingSliproutes, (req, res) => {});
+app.use(baseURL, loadingSliproutes, (req, res) => {});
 // error handler
 const PORT = process.env.PORT || 3000;
 // log
