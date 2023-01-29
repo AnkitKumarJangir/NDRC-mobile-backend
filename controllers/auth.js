@@ -29,7 +29,7 @@ const loginUser = (req, res, next) => {
         expiresIn: 86400, // 24 hours
       });
       res.status(200).send({
-        ...user,
+        data: user,
         token: token,
       });
     });
