@@ -3,6 +3,7 @@ const cors = require("cors");
 const dotenv = require("dotenv");
 dotenv.config();
 var mongoose = require("mongoose");
+const nodemailer = require("nodemailer");
 const loadingSliproutes = require("./routers/loading_slip");
 const authRoutes = require("./routers/auth");
 const app = express();

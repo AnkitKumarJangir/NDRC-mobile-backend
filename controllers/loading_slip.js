@@ -1,5 +1,6 @@
 const loadingSlip = require("../models/loading_slip");
 const { validationResult } = require("express-validator");
+const mailer = require("../controllers/mailer");
 const auth = require("./auth");
 const moment = require("moment");
 // create new slip
@@ -39,10 +40,17 @@ async function createLoadingSlip(req, res, next) {
       created_by: user ? user.username : "",
     });
 
-    clt.save((err, doc) => {
+    clt.save(async (err, doc) => {
       if (err) {
         res.status(400).send({ message: err });
       } else {
+        obj = {
+          from: process.env.authEmail,
+          to: user.email,
+          subject: "Loading slip",
+          text: `loading slip with serial number ${doc.s_no} is created by ${user.username}`,
+        };
+        const mail = await mailer.sendMail(obj);
         res.send({ message: "successfully created", id: doc._id });
       }
     });
@@ -70,7 +78,7 @@ const getSingleLoadingSlips = (req, res) => {
   });
 };
 // update one
-const updateLoadingSlips = (req, res) => {
+const updateLoadingSlips = async (req, res) => {
   console.log(req);
   if (req.params.id) {
     const errors = validationResult(req);
@@ -106,14 +114,22 @@ const updateLoadingSlips = (req, res) => {
         updated_date: moment().format("YYYY-MM-DD"),
         created_by: req.body.user_name,
       };
+      const user = await auth.getUserBytoken(req.headers.authorization);
       loadingSlip.findOneAndUpdate(
         { _id: req.params.id },
         { $set: payload },
         { new: true },
-        (err, doc) => {
+        async (err, doc) => {
           if (err) {
             return res.status(400).send({ message: "Not found" });
           } else {
+            obj = {
+              from: process.env.authEmail,
+              to: user.email,
+              subject: "Loading slip",
+              text: `loading slip with serial number ${doc.s_no} is updated by ${user.username}`,
+            };
+            const mail = await mailer.sendMail(obj);
             res.send({ message: "updated successfully", id: doc._id });
           }
         }
@@ -124,12 +140,20 @@ const updateLoadingSlips = (req, res) => {
   }
 };
 // delete one
-const deleteLoadingSlips = (req, res) => {
+const deleteLoadingSlips = async (req, res) => {
   if (req.params.id) {
-    loadingSlip.deleteOne({ _id: req.params.id }, (err, doc) => {
+    const user = await auth.getUserBytoken(req.headers.authorization);
+    loadingSlip.deleteOne({ _id: req.params.id }, async (err, doc) => {
       if (err) {
         return res.status(400).send({ message: "Not found" });
       } else {
+        obj = {
+          from: process.env.authEmail,
+          to: user.email,
+          subject: "Loading slip",
+          text: `loading slip with serial number ${doc.s_no} is deleted by ${user.username}`,
+        };
+        const mail = await mailer.sendMail(obj);
         res.send({ message: "successfully deleted" });
       }
     });
