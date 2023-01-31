@@ -17,19 +17,21 @@ transporter.verify(function (error, success) {
     console.log("Server is ready to take our messages");
   }
 });
-async function sendMail(obj) {
+function sendMail(obj) {
   var mailOptions = {
     from: process.env.AUTH_EMAIL,
     to: obj.to,
     subject: obj.subject,
     text: obj.text,
   };
-  await transporter.sendMail(mailOptions, (error, info) => {
-    if (error) {
-      console.log(error);
-    } else {
-      console.log("Email sent: " + info.response);
-    }
+  new Promise((resolve, reject) => {
+    transporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        reject(error);
+      } else {
+        resolve("email sent");
+      }
+    });
   });
 }
 
