@@ -58,13 +58,24 @@ async function createLoadingSlip(req, res, next) {
 }
 // get All slips
 const getLoadingSlips = (req, res) => {
-  loadingSlip.find((err, doc) => {
-    if (err) {
-      return res.status(400).send({ message: err });
-    } else {
-      res.send({ count: doc.length, data: doc });
-    }
-  });
+  console.log(req.query.search);
+  if (req.query.search) {
+    loadingSlip.find({ party: req.query.search }, (err, doc) => {
+      if (err) {
+        return res.status(400).send({ message: err });
+      } else {
+        res.send({ count: doc.length, data: doc });
+      }
+    });
+  } else {
+    loadingSlip.find((err, doc) => {
+      if (err) {
+        return res.status(400).send({ message: err });
+      } else {
+        res.send({ count: doc.length, data: doc });
+      }
+    });
+  }
 };
 // single get
 const getSingleLoadingSlips = (req, res) => {
