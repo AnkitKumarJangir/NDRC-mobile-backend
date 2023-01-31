@@ -10,7 +10,6 @@ const transporter = nodemailer.createTransport({
 });
 
 async function sendMail(obj) {
-  console.log(obj);
   var mailOptions = {
     from: process.env.authEmail,
     to: obj.to,

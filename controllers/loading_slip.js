@@ -79,7 +79,6 @@ const getSingleLoadingSlips = (req, res) => {
 };
 // update one
 const updateLoadingSlips = async (req, res) => {
-  console.log(req);
   if (req.params.id) {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
