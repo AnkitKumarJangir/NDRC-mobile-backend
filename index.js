@@ -31,7 +31,7 @@ const connectDB = async () => {
   }
 };
 const transporter = nodemailer.createTransport({
-  service: "Gmail",
+  service: "gmail",
   host: process.env.EMAIL_HOST,
   port: 465,
   secure: true,
