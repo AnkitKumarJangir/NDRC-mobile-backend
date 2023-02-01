@@ -186,6 +186,7 @@ const sendOtp = async (req, res) => {
             res.status(400).send("not found");
           } else {
             const mail = await mailer.sendMail(obj);
+            console.log(mail);
             res.send({ message: "sent OTP successfully ", email: doc.email });
           }
         });

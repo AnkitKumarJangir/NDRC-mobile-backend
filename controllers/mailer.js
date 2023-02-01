@@ -16,15 +16,15 @@ transporter.verify(function (error, success) {
     console.log("Server is ready to take our messages");
   }
 });
-function sendMail(obj) {
+async function sendMail(obj) {
   var mailOptions = {
     from: process.env.AUTH_EMAIL,
     to: obj.to,
     subject: obj.subject,
     html: obj.html,
   };
-  new Promise((resolve, reject) => {
-    transporter.sendMail(mailOptions, (error, info) => {
+  return await new Promise(async (resolve, reject) => {
+    await transporter.sendMail(mailOptions, (error, info) => {
       if (error) {
         reject(error);
       } else {
