@@ -32,8 +32,8 @@ const connectDB = async () => {
 };
 const transporter = nodemailer.createTransport({
   host: process.env.EMAIL_HOST,
-  port: 465,
-  secure: true,
+  port: 587,
+
   auth: {
     user: process.env.AUTH_EMAIL,
     pass: process.env.AUTH_E_PASS,
