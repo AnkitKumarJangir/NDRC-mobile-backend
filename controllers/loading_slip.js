@@ -44,12 +44,19 @@ async function createLoadingSlip(req, res, next) {
       if (err) {
         res.status(400).send({ message: err });
       } else {
-        obj = {
-          from: process.env.authEmail,
-          to: user.email,
-          subject: "Loading slip",
-          text: `loading slip with serial number ${doc.s_no} is created by ${user.username}`,
-        };
+        const tem = await emailTemplate(
+            "created",
+            user.email,
+            doc.s_no,
+            user.username
+          ),
+          obj = {
+            from: process.env.AUTH_EMAIL,
+            to: user.email,
+            subject: "Loading slip",
+            html: tem,
+            // html: `<h1 style="color:red;">loading slip with serial number ${doc.s_no} is created by ${user.username}</h1>`,
+          };
         const mail = await mailer.sendMail(obj);
         res.send({ message: "successfully created", id: doc._id });
       }
@@ -58,7 +65,6 @@ async function createLoadingSlip(req, res, next) {
 }
 // get All slips
 const getLoadingSlips = (req, res) => {
-  console.log(req.query.search);
   if (req.query.search) {
     loadingSlip.find({ party: req.query.search }, (err, doc) => {
       if (err) {
@@ -133,12 +139,18 @@ const updateLoadingSlips = async (req, res) => {
           if (err) {
             return res.status(400).send({ message: "Not found" });
           } else {
-            obj = {
-              from: process.env.authEmail,
-              to: user.email,
-              subject: "Loading slip",
-              text: `loading slip with serial number ${doc.s_no} is updated by ${user.username}`,
-            };
+            const tem = await emailTemplate(
+                "updated",
+                user.email,
+                doc.s_no,
+                user.username
+              ),
+              obj = {
+                from: process.env.AUTH_EMAIL,
+                to: user.email,
+                subject: "Loading slip",
+                html: tem,
+              };
             const mail = await mailer.sendMail(obj);
             res.send({ message: "updated successfully", id: doc._id });
           }
@@ -157,13 +169,20 @@ const deleteLoadingSlips = async (req, res) => {
       if (err) {
         return res.status(400).send({ message: "Not found" });
       } else {
-        obj = {
-          from: process.env.authEmail,
-          to: user.email,
-          subject: "Loading slip",
-          text: `loading slip with serial number ${doc.s_no} is deleted by ${user.username}`,
-        };
+        const tem = await emailTemplate(
+            "deleted",
+            user.email,
+            doc?.s_no,
+            user.username
+          ),
+          obj = {
+            from: process.env.AUTH_EMAIL,
+            to: user.email,
+            subject: "Loading slip",
+            html: tem,
+          };
         const mail = await mailer.sendMail(obj);
+        console.log(doc);
         res.send({ message: "successfully deleted" });
       }
     });
@@ -187,6 +206,17 @@ const getLoadingSlipsSerialNo = (req, res) => {
     }
   });
 };
+
+function emailTemplate(action, email, s_no, userName) {
+  return ` <div style="width:100%;justify-content:center;display:flex;">
+   <div style="width:100%">
+  <div style="color:white;background:#ff811af4;text-align:center;height:40px;font-size:25px;font-weight:700;padding:10px 0px 0px 0px">NDRC Doc</div>
+    <div style="height:150px;font-size:15px;text-align:center;padding:60px 0px 0px 0px">Hello <span style="text-decoration:underline;color:red">${email}</span> a new loading slip has been ${action} by ${userName}.#${s_no}</div>
+    <div style="color:white;background:#ff811af4;text-align:center;height:40px;font-size:12px;font-weight:500;padding:20px 0px 0px 0px">@copyright NDRC Doc,Faridabad support@New Deep Road Carrier</div>
+    </div>
+  </div>`;
+}
+
 module.exports = {
   createLoadingSlip,
   getLoadingSlips,

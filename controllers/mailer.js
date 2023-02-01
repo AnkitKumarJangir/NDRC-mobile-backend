@@ -22,7 +22,7 @@ function sendMail(obj) {
     from: process.env.AUTH_EMAIL,
     to: obj.to,
     subject: obj.subject,
-    text: obj.text,
+    html: obj.html,
   };
   new Promise((resolve, reject) => {
     transporter.sendMail(mailOptions, (error, info) => {
