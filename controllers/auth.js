@@ -223,7 +223,7 @@ const verifyOtp = async (req, res) => {
               );
               res.send({ message: "OTP verified successfully" });
             } else {
-              res.send({ message: "invaild OTP" });
+              res.status(400).send({ message: "invaild OTP" });
             }
           }
         });
