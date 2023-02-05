@@ -211,8 +211,9 @@ const deleteLoadingSlips = async (req, res) => {
   }
 };
 // get serial number
-const getLoadingSlipsSerialNo = (req, res) => {
-  loadingSlip.find((err, doc) => {
+const getLoadingSlipsSerialNo = async (req, res) => {
+  const user = await auth.getUserBytoken(req.headers.authorization);
+  loadingSlip.find({ franchise_id: user.franchise_id }, (err, doc) => {
     if (err) {
       return res.status(400).send({ message: err });
     } else {
