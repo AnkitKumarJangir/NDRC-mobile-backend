@@ -1,5 +1,6 @@
 const loadingSlip = require("../models/loading_slip");
 const { validationResult } = require("express-validator");
+const comPController = require("../controllers/company");
 const mailer = require("../controllers/mailer");
 const auth = require("./auth");
 const moment = require("moment");
@@ -14,6 +15,9 @@ async function createLoadingSlip(req, res, next) {
     });
   } else {
     const user = await auth.getUserBytoken(req.headers.authorization);
+    const companyEmail = await comPController.getCompanyEmail(
+      req.headers.authorization
+    );
     let clt = new loadingSlip({
       s_no: req.body.s_no,
       date: req.body.date,
@@ -38,21 +42,21 @@ async function createLoadingSlip(req, res, next) {
       created_date: moment().format("YYYY-MM-DD"),
       updated_date: moment().format("YYYY-MM-DD"),
       created_by: user ? user.username : "",
+      franchise_id: user.franchise_id,
     });
-
     clt.save(async (err, doc) => {
       if (err) {
         res.status(400).send({ message: err });
       } else {
         const tem = await emailTemplate(
             "created",
-            user.email,
+            companyEmail,
             doc.s_no,
             user.username
           ),
           obj = {
             from: process.env.AUTH_EMAIL,
-            to: user.email,
+            to: companyEmail,
             subject: "Loading slip",
             html: tem,
             // html: `<h1 style="color:red;">loading slip with serial number ${doc.s_no} is created by ${user.username}</h1>`,
@@ -64,17 +68,21 @@ async function createLoadingSlip(req, res, next) {
   }
 }
 // get All slips
-const getLoadingSlips = (req, res) => {
+const getLoadingSlips = async (req, res) => {
+  const user = await auth.getUserBytoken(req.headers.authorization);
   if (req.query.search) {
-    loadingSlip.find({ party: req.query.search }, (err, doc) => {
-      if (err) {
-        return res.status(400).send({ message: err });
-      } else {
-        res.send({ count: doc.length, data: doc });
+    loadingSlip.find(
+      { party: req.query.search, franchise_id: user.franchise_id },
+      (err, doc) => {
+        if (err) {
+          return res.status(400).send({ message: err });
+        } else {
+          res.send({ count: doc.length, data: doc });
+        }
       }
-    });
+    );
   } else {
-    loadingSlip.find((err, doc) => {
+    loadingSlip.find({ franchise_id: user.franchise_id }, (err, doc) => {
       if (err) {
         return res.status(400).send({ message: err });
       } else {
@@ -84,15 +92,18 @@ const getLoadingSlips = (req, res) => {
   }
 };
 // single get
-const getSingleLoadingSlips = (req, res) => {
-  console.log(req);
-  loadingSlip.findOne({ _id: req.params.id }, (err, doc) => {
-    if (err) {
-      return res.status(400).send({ message: "Not found" });
-    } else {
-      res.send(doc);
+const getSingleLoadingSlips = async (req, res) => {
+  const user = await auth.getUserBytoken(req.headers.authorization);
+  loadingSlip.findOne(
+    { _id: req.params.id, franchise_id: user.franchise_id },
+    (err, doc) => {
+      if (err) {
+        return res.status(400).send({ message: "Not found" });
+      } else {
+        res.send(doc);
+      }
     }
-  });
+  );
 };
 // update one
 const updateLoadingSlips = async (req, res) => {
@@ -105,6 +116,7 @@ const updateLoadingSlips = async (req, res) => {
         }),
       });
     } else {
+      const user = await auth.getUserBytoken(req.headers.authorization);
       let payload = {
         s_no: req.body.s_no,
         date: req.body.date,
@@ -127,10 +139,15 @@ const updateLoadingSlips = async (req, res) => {
         advance: req.body.advance,
         balance: req.body.balance,
         created_date: req.body.created_date,
+
         updated_date: moment().format("YYYY-MM-DD"),
+        franchise_id: user.franchise_id,
         created_by: req.body.user_name,
       };
-      const user = await auth.getUserBytoken(req.headers.authorization);
+
+      const companyEmail = await comPController.getCompanyEmail(
+        req.headers.authorization
+      );
       loadingSlip.findOneAndUpdate(
         { _id: req.params.id },
         { $set: payload },
@@ -141,13 +158,13 @@ const updateLoadingSlips = async (req, res) => {
           } else {
             const tem = await emailTemplate(
                 "updated",
-                user.email,
+                companyEmail,
                 doc.s_no,
                 user.username
               ),
               obj = {
                 from: process.env.AUTH_EMAIL,
-                to: user.email,
+                to: companyEmail,
                 subject: "Loading slip",
                 html: tem,
               };
@@ -165,24 +182,27 @@ const updateLoadingSlips = async (req, res) => {
 const deleteLoadingSlips = async (req, res) => {
   if (req.params.id) {
     const user = await auth.getUserBytoken(req.headers.authorization);
-    loadingSlip.deleteOne({ _id: req.params.id }, async (err, doc) => {
+    const companyEmail = await comPController.getCompanyEmail(
+      req.headers.authorization
+    );
+    loadingSlip.findOneAndDelete({ _id: req.params.id }, async (err, doc) => {
       if (err) {
         return res.status(400).send({ message: "Not found" });
       } else {
         const tem = await emailTemplate(
             "deleted",
-            user.email,
+            companyEmail,
             doc?.s_no,
             user.username
           ),
           obj = {
             from: process.env.AUTH_EMAIL,
-            to: user.email,
+            to: companyEmail,
             subject: "Loading slip",
             html: tem,
           };
         const mail = await mailer.sendMail(obj);
-        console.log(doc);
+
         res.send({ message: "successfully deleted" });
       }
     });

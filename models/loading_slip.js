@@ -24,5 +24,6 @@ const loadingSlip = mongoose.model("loadingSlip", {
   created_date: { type: String },
   updated_date: { type: String },
   created_by: { type: String },
+  franchise_id: { type: String },
 });
 module.exports = loadingSlip;

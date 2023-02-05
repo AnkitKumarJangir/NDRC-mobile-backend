@@ -5,6 +5,8 @@ dotenv.config();
 var mongoose = require("mongoose");
 const nodemailer = require("nodemailer");
 const loadingSliproutes = require("./routers/loading_slip");
+const companyRoutes = require("./routers/company");
+
 const authRoutes = require("./routers/auth");
 const app = express();
 var corsOptions = {
@@ -17,6 +19,7 @@ app.use(express.urlencoded({ extended: true }));
 // simple route
 baseURL = "/api";
 app.use(baseURL + "/auth", authRoutes, (req, res) => {});
+app.use(baseURL + "/company", companyRoutes, (req, res) => {});
 app.use(baseURL, loadingSliproutes, (req, res) => {});
 // error handler
 const PORT = process.env.PORT || 3000;
