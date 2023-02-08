@@ -3,6 +3,7 @@ const otp = require("../models/user-otp");
 const jwt = require("jsonwebtoken");
 const { validationResult } = require("express-validator");
 const mailer = require("../controllers/mailer");
+const bcrypt = require("bcryptjs");
 const loginUser = (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -12,29 +13,39 @@ const loginUser = (req, res, next) => {
       }),
     });
   } else {
-    login.findOne({ username: req.body.username.trim() }).exec((err, user) => {
-      if (err) {
-        res.status(500).send({ message: err });
-        return;
-      }
+    login
+      .findOne({ username: req.body.username.trim() })
+      .exec(async (err, user) => {
+        if (err) {
+          res.status(500).send({ message: err });
+          return;
+        }
 
-      if (!user) {
-        return res.status(404).send({ message: "User Not found." });
-      }
-      var passwordIsValid = req.body.password === user.password ? true : false;
+        if (!user) {
+          return res.status(404).send({ message: "User Not found." });
+        }
 
-      if (!passwordIsValid) {
-        return res.status(400).send({ message: "Invalid Password!" });
-      }
-      var token = jwt.sign({ id: user.id }, process.env.JWT_SECRET_KEY, {
-        expiresIn: 86400, // 24 hours
+        var passwordIsValid = await bcrypt
+          .compare(req.body.password, user.password)
+          .then((res) => {
+            console.log(res);
+            return res;
+          });
+        console.log(passwordIsValid);
+        // var passwordIsValid = req.body.password === user.password ? true : false;
+
+        if (!passwordIsValid) {
+          return res.status(400).send({ message: "Invalid Password!" });
+        }
+        var token = jwt.sign({ id: user.id }, process.env.JWT_SECRET_KEY, {
+          expiresIn: 86400, // 24 hours
+        });
+        delete user["password"];
+        res.status(200).send({
+          data: user,
+          token: token,
+        });
       });
-      delete user["password"];
-      res.status(200).send({
-        data: user,
-        token: token,
-      });
-    });
   }
 };
 const changePassword = async (req, res) => {
@@ -53,9 +64,14 @@ const changePassword = async (req, res) => {
         }),
       });
     } else {
-      if (req.body.old_password == user.password) {
+      var passwordIsValid = await bcrypt
+        .compare(req.body.old_password, user.password)
+        .then((res) => {
+          return res;
+        });
+      if (passwordIsValid) {
         let payload = {
-          password: req.body.new_password,
+          password: bcrypt.hash(req.body.new_password, 10),
         };
         login.findByIdAndUpdate(
           { _id: user._id },
@@ -250,7 +266,7 @@ const resetPassword = async (req, res) => {
             console.log(doc);
             if (doc?.length && doc[0].is_verified) {
               let payload = {
-                password: req.body.new_password,
+                password: bcrypt.hash(req.body.new_password, 10),
               };
               login.findOneAndUpdate(
                 { _id: user._id },
