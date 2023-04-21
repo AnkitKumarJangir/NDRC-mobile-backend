@@ -3,6 +3,8 @@ const otp = require("../models/user-otp");
 const jwt = require("jsonwebtoken");
 const { validationResult } = require("express-validator");
 const mailer = require("../controllers/mailer");
+var ObjectId = require("mongodb").ObjectID;
+
 const bcrypt = require("bcryptjs");
 const loginUser = (req, res, next) => {
   const errors = validationResult(req);
@@ -31,9 +33,11 @@ const loginUser = (req, res, next) => {
             console.log(res);
             return res;
           });
+        // console.log(passwordIsValid);
+        console.log(user);
+        // var passwordIsValid =
+        //   req.body.password === user.password ? true : false;
         console.log(passwordIsValid);
-        // var passwordIsValid = req.body.password === user.password ? true : false;
-
         if (!passwordIsValid) {
           return res.status(400).send({ message: "Invalid Password!" });
         }
@@ -197,10 +201,13 @@ const sendOtp = async (req, res) => {
           otp: generated_otp,
           is_verified: false,
         });
+        console.log(payload);
         payload.save(async (err, otp_in) => {
           if (err) {
+            console.log(err);
             res.status(400).send("not found");
           } else {
+            console.log("data", otp_in);
             const mail = await mailer.sendMail(obj);
             console.log(mail);
             res.send({ message: "sent OTP successfully ", email: doc.email });
@@ -222,11 +229,11 @@ const verifyOtp = async (req, res) => {
         if (!doc) {
           return res.status(400).send({ message: "invaild email id" });
         }
-        otp.find({ user_id: doc._id }, (err, otp_inst) => {
+        otp.find({ user_id: ObjectId(doc._id) }, (err, otp_inst) => {
           if (err) {
             return res.status(400).send({ message: "not found" });
           } else {
-            console.log(otp_inst);
+            console.log("otp- >", otp_inst);
             if (otp_inst[0].otp == req.body.otp) {
               let payload = {
                 is_verified: true,
@@ -259,20 +266,24 @@ const resetPassword = async (req, res) => {
         if (!user) {
           return res.status(400).send({ message: "invaild email id" });
         }
-        otp.find({ user_id: user._id }, (err, doc) => {
+        otp.find({ user_id: ObjectId(user._id) }, async (err, doc) => {
           if (err) {
             return res.status(400).send({ message: "not found" });
           } else {
             console.log(doc);
             if (doc?.length && doc[0].is_verified) {
               let payload = {
-                password: bcrypt.hash(req.body.new_password, 10),
+                password: await bcrypt.hash(req.body.new_password, 10),
               };
+              console.log(payload);
               login.findOneAndUpdate(
-                { _id: user._id },
+                { _id: ObjectId(user._id) },
                 { $set: payload },
                 { new: true },
-                (err, doc) => {}
+                (err, doc) => {
+                  console.log(err);
+                  console.log(doc);
+                }
               );
               otp.deleteOne({ user_id: user._id }, (err, data) => {});
               res.send({ message: "success" });
