@@ -237,9 +237,52 @@ function emailTemplate(action, email, s_no, userName) {
     </div>
   </div>`;
 }
-
+const getDashbaordDetails = async (req, res) => {
+  const user = await auth.getUserBytoken(req.headers.authorization);
+  const payload = {
+    total_loading_slip: await getTotalLoadingSlip(user),
+    monthly_loading_slip: await getMonthlyLoadingSlip(user),
+    total_bills: 0,
+  };
+  res.status(200).send(payload);
+};
+async function getTotalLoadingSlip(user) {
+  let count;
+  count = await loadingSlip
+    .find({ franchise_id: user.franchise_id })
+    .count(function (err, doc) {
+      if (err) {
+        return;
+      }
+      return doc;
+    })
+    .clone();
+  return count;
+}
+async function getMonthlyLoadingSlip(user) {
+  let total;
+  const now = new Date().getMonth() + 1;
+  total = await loadingSlip
+    .find(
+      {
+        franchise_id: user.franchise_id,
+      },
+      (err, doc) => {
+        if (err) {
+          return;
+        }
+        return doc;
+      }
+    )
+    .clone();
+  const count = total.filter(
+    (d) => new Date(d.created_date).getMonth() + 1 == now
+  );
+  return count.length;
+}
 module.exports = {
   createLoadingSlip,
+  getDashbaordDetails,
   getLoadingSlips,
   deleteLoadingSlips,
   getSingleLoadingSlips,

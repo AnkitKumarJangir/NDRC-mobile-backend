@@ -52,6 +52,7 @@ router.post(
   auth.changePassword
 );
 router.get("/get-user-details", auth.getUser);
+router.get("/dashboard", loading_slip_controller.getDashbaordDetails);
 router.put("/update-profile", auth.updateUserProfile);
 
 module.exports = router;
