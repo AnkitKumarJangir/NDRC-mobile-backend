@@ -2,6 +2,8 @@ const loadingSlip = require("../models/loading_slip");
 const { validationResult } = require("express-validator");
 const comPController = require("../controllers/company");
 const mailer = require("../controllers/mailer");
+const ExcelJS = require("exceljs");
+
 const auth = require("./auth");
 const moment = require("moment");
 // create new slip
@@ -70,6 +72,60 @@ async function createLoadingSlip(req, res, next) {
 // get All slips
 const getLoadingSlips = async (req, res) => {
   const user = await auth.getUserBytoken(req.headers.authorization);
+  console.log(req.query.search);
+
+  loadingSlip.find(
+    {
+      ...(req.query.search && {
+        party: req.query.search,
+      }),
+      franchise_id: user.franchise_id,
+    },
+    async (err, doc) => {
+      if (err) {
+        return res.status(400).send({ message: err });
+      } else {
+        const response = doc.reverse();
+        if (req.query.export && req.query.export == "yes") {
+          const workbook = new ExcelJS.Workbook();
+          const worksheet = workbook.addWorksheet("Sheet 1");
+          worksheet.columns = [
+            { header: "S. No.", key: "s_no", width: 15 },
+            { header: "Date", key: "date", width: 15 },
+            { header: "Party", key: "party", width: 30 },
+            { header: "Address", key: "address", width: 30 },
+            { header: "Trailor No.", key: "trailor_no", width: 15 },
+            { header: "From", key: "from", width: 15 },
+            { header: "To", key: "to", width: 15 },
+            { header: "Goods", key: "goods", width: 15 },
+            { header: "Freight", key: "freight", width: 15 },
+            { header: "P M T", key: "p_m_t", width: 15 },
+            { header: "Fine", key: "fine", width: 15 },
+            { header: "Detain", key: "detain", width: 15 },
+            { header: "length", key: "l", width: 10 },
+            { header: "width", key: "w", width: 10 },
+            { header: "Height", key: "h", width: 10 },
+            { header: "Weight", key: "weight", width: 10 },
+            { header: "Guarantee", key: "guarantee", width: 10 },
+            { header: "Advance", key: "advance", width: 25 },
+            { header: "Balance", key: "balance", width: 25 },
+          ];
+          worksheet.addRows(response);
+          res.setHeader(
+            "Content-Type",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+          );
+          await workbook.xlsx.write(res);
+          res.end();
+          return;
+        }
+
+        res.send({ count: doc.length, data: response });
+      }
+    }
+  );
+  return;
+
   if (req.query.search) {
     loadingSlip.find(
       { party: req.query.search, franchise_id: user.franchise_id },
@@ -86,7 +142,7 @@ const getLoadingSlips = async (req, res) => {
       if (err) {
         return res.status(400).send({ message: err });
       } else {
-        res.send({ count: doc.length, data: doc });
+        res.send({ count: doc.length, data: doc.reverse() });
       }
     });
   }
