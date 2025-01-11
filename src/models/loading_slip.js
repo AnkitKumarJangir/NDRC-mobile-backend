@@ -1,0 +1,30 @@
+const mongoose = require("mongoose");
+
+const loadingSlip = mongoose.model("loadingSlip", {
+  s_no: { type: Number },
+  date: { type: String },
+  customer: { type: mongoose.Schema.Types.ObjectId, ref: "customers" },
+  address: { type: String },
+  trailor_no: { type: String },
+  from: { type: String },
+  to: { type: String },
+  goods: { type: String },
+  freight: { type: Number },
+  p_m_t: { type: String },
+  fine: { type: Number },
+  detain: { type: String },
+  size: { type: Number },
+  l: { type: Number },
+  w: { type: Number },
+  h: { type: Number },
+  weight: { type: Number },
+  guarantee: { type: String },
+  advance: { type: Number },
+  balance: { type: Number },
+  created_date: { type: Date, default: Date.now },
+  updated_date: { type: Date, default: Date.now },
+  created_by: { type: String },
+  description: { type: String },
+  franchise_id: { type: String },
+});
+module.exports = loadingSlip;
