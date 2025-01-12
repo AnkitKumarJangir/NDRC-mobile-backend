@@ -5,9 +5,6 @@ const main_root = require("./routers/main-root");
 
 //  create express App
 const app = express();
-// routes
-main_root.main_root(app);
-
 var corsOptions = {
   origin: "*",
 };
@@ -15,5 +12,7 @@ var corsOptions = {
 app.use(cors(corsOptions));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+
+main_root.main_root(app);
 
 module.exports = app;
