@@ -16,7 +16,6 @@ const loadinn_slip_valid = () => {
     check("weight", "weight is required").not().isEmpty(),
     check("advance", "advance is required").not().isEmpty(),
     check("balance", "balance is required").not().isEmpty(),
-    check("description", "description is required").not().isEmpty(),
   ];
 };
 const changePassword_valid = () => {

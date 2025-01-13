@@ -6,7 +6,10 @@ const main_root = require("./routers/main-root");
 //  create express App
 const app = express();
 var corsOptions = {
-  origin: "*",
+  "origin": ["http://localhost:4200","http://64.227.147.224"],
+  "methods": "GET,HEAD,PUT,PATCH,POST,DELETE",
+  "preflightContinue": false,
+  "optionsSuccessStatus": 204
 };
 
 app.use(cors(corsOptions));

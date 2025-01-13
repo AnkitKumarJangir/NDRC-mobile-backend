@@ -18,9 +18,9 @@ async function createLoadingSlip(req, res, next) {
     });
   } else {
     const user = await auth.getUserBytoken(req.headers.authorization);
-    const companyEmail = await comPController.getCompanyEmail(
-      req.headers.authorization
-    );
+    // const companyEmail = await comPController.getCompanyEmail(
+    //   req.headers.authorization
+    // );
     let clt = new loadingSlip({
       s_no: req.body.s_no,
       date: req.body.date,
@@ -50,20 +50,20 @@ async function createLoadingSlip(req, res, next) {
       if (err) {
         res.status(400).send({ message: err });
       } else {
-        const tem = await emailTemplate(
-            "created",
-            companyEmail,
-            doc.s_no,
-            user.username
-          ),
-          obj = {
-            from: process.env.AUTH_EMAIL,
-            to: companyEmail,
-            subject: "Loading slip",
-            html: tem,
-            // html: `<h1 style="color:red;">loading slip with serial number ${doc.s_no} is created by ${user.username}</h1>`,
-          };
-        const mail = await mailer.sendMail(obj);
+        // const tem = await emailTemplate(
+        //     "created",
+        //     companyEmail,
+        //     doc.s_no,
+        //     user.username
+        //   ),
+        //   obj = {
+        //     from: process.env.AUTH_EMAIL,
+        //     to: companyEmail,
+        //     subject: "Loading slip",
+        //     html: tem,
+        //     // html: `<h1 style="color:red;">loading slip with serial number ${doc.s_no} is created by ${user.username}</h1>`,
+        //   };
+        // const mail = await mailer.sendMail(obj);
         res.send({ message: "successfully created", id: doc._id });
       }
     });
@@ -205,9 +205,9 @@ const updateLoadingSlips = async (req, res) => {
         created_by: req.body.user_name,
       };
 
-      const companyEmail = await comPController.getCompanyEmail(
-        req.headers.authorization
-      );
+      // const companyEmail = await comPController.getCompanyEmail(
+      //   req.headers.authorization
+      // );
       loadingSlip.findOneAndUpdate(
         { _id: req.params.id },
         { $set: payload },
@@ -216,19 +216,19 @@ const updateLoadingSlips = async (req, res) => {
           if (err) {
             return res.status(400).send({ message: "Not found" });
           } else {
-            const tem = await emailTemplate(
-                "updated",
-                companyEmail,
-                doc.s_no,
-                user.username
-              ),
-              obj = {
-                from: process.env.AUTH_EMAIL,
-                to: companyEmail,
-                subject: "Loading slip",
-                html: tem,
-              };
-            const mail = await mailer.sendMail(obj);
+            // const tem = await emailTemplate(
+            //     "updated",
+            //     companyEmail,
+            //     doc.s_no,
+            //     user.username
+            //   ),
+            //   obj = {
+            //     from: process.env.AUTH_EMAIL,
+            //     to: companyEmail,
+            //     subject: "Loading slip",
+            //     html: tem,
+            //   };
+            // const mail = await mailer.sendMail(obj);
             res.send({ message: "updated successfully", id: doc._id });
           }
         }
@@ -242,26 +242,26 @@ const updateLoadingSlips = async (req, res) => {
 const deleteLoadingSlips = async (req, res) => {
   if (req.params.id) {
     const user = await auth.getUserBytoken(req.headers.authorization);
-    const companyEmail = await comPController.getCompanyEmail(
-      req.headers.authorization
-    );
+    // const companyEmail = await comPController.getCompanyEmail(
+    //   req.headers.authorization
+    // );
     loadingSlip.findOneAndDelete({ _id: req.params.id }, async (err, doc) => {
       if (err) {
         return res.status(400).send({ message: "Not found" });
       } else {
-        const tem = await emailTemplate(
-            "deleted",
-            companyEmail,
-            doc?.s_no,
-            user.username
-          ),
-          obj = {
-            from: process.env.AUTH_EMAIL,
-            to: companyEmail,
-            subject: "Loading slip",
-            html: tem,
-          };
-        const mail = await mailer.sendMail(obj);
+        // const tem = await emailTemplate(
+        //     "deleted",
+        //     companyEmail,
+        //     doc?.s_no,
+        //     user.username
+        //   ),
+        //   obj = {
+        //     from: process.env.AUTH_EMAIL,
+        //     to: companyEmail,
+        //     subject: "Loading slip",
+        //     html: tem,
+        //   };
+        // const mail = await mailer.sendMail(obj);
 
         res.send({ message: "successfully deleted" });
       }
