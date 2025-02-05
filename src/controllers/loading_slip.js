@@ -163,7 +163,7 @@ const getSingleLoadingSlips = async (req, res) => {
         res.send(doc);
       }
     }
-  );
+  ).populate('customer',["_id","name"])
 };
 // update one
 const updateLoadingSlips = async (req, res) => {

@@ -11,7 +11,14 @@ const getCustomerList = async (req, res) => {
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
     const list = await customer
-      .find({ franchise_id: user.franchise_id })
+      .find({  
+        ...(req.query.search && {
+          $or: [
+            { name: { $regex: req.query.search, $options: "i" } },
+            { mobile: { $regex: req.query.search, $options: "i" } },
+            { email: { $regex: req.query.search, $options: "i" } },
+          ],
+        }),franchise_id: user.franchise_id })
       .skip(skip)
       .limit(limit);
 

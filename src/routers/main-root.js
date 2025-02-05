@@ -2,6 +2,7 @@ const loadingSliproutes = require("./loading_slip");
 const companyRoutes = require("./company");
 const authRoutes = require("./auth");
 const customer = require("./customer");
+const entries = require('./entries')
 const isAuthenticated = require("../../middlewares/isAuthenticated");
 
 const main_root = (app) => {
@@ -15,6 +16,7 @@ const main_root = (app) => {
     isAuthenticated.isAuthenticated,
     loadingSliproutes
   );
+  app.use(baseURL + "/entries", isAuthenticated.isAuthenticated, entries);
 };
 
 module.exports = {
