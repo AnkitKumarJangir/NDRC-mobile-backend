@@ -22,7 +22,7 @@ const pagination = (req, count, page, limit) => {
   const previous =
     page > 1 ? `${baseUrl}?page=${page - 1}&limit=${limit}` : null;
 
-  return { next: nextPage, previous: previous };
+  return { next:nextPage, previous:previous };
 };
 
 const getRequestUrl = (req) => {

@@ -5,8 +5,9 @@ const main_root = require("./routers/main-root");
 
 //  create express App
 const app = express();
+
 var corsOptions = {
-  "origin": ["http://localhost:4200","http://64.227.147.224"],
+  "origin": ["http://localhost:4200","http://64.227.147.224,'https://ndrc-web-v2.onrender.com"],
   "methods": "GET,HEAD,PUT,PATCH,POST,DELETE",
   "preflightContinue": false,
   "optionsSuccessStatus": 204

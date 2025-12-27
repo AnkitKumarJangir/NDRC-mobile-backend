@@ -132,7 +132,7 @@ const getLoadingSlips = async (req, res) => {
       return;
     }
     // pagination
-    const count = await loadingSlip.countDocuments();
+    const count = list.length;
     const { next, previous } = helper.pagination(req, count, page, limit);
 
     // send response JSON
