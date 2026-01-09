@@ -23,5 +23,6 @@ router.put(
   customerController.updatedCustomer
 );
 router.delete("/customers/:id", customerController.deleteCustomer);
+router.post("/customers-bulk-delete", validations.customer_bulk_validations(), customerController.bulkDelete);
 
 module.exports = router;

@@ -9,5 +9,6 @@ const login = mongoose.model("users", {
   mobile: { type: String },
   is_admin: { type: Boolean },
   franchise_id: { type: String },
+  
 });
 module.exports = login;

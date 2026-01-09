@@ -6,4 +6,12 @@ const loginValid = () => {
     check("password", "Password is required").notEmpty(),
   ];
 };
-module.exports = { loginValid };
+const signupValid = () => {
+  return [
+    check("first_name", "first name is required").notEmpty(),
+    check("last_name", "last name is required").notEmpty(),
+    check("mobile", "mobile number is required").notEmpty(),
+    check("password", "password is required").notEmpty(),
+  ];
+};
+module.exports = { loginValid,signupValid};

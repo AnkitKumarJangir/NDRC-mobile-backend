@@ -11,14 +11,15 @@ const getCustomerList = async (req, res) => {
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
     const list = await customer
-      .find({  
+      .find({
         ...(req.query.search && {
           $or: [
             { name: { $regex: req.query.search, $options: "i" } },
             { mobile: { $regex: req.query.search, $options: "i" } },
             { email: { $regex: req.query.search, $options: "i" } },
           ],
-        }),franchise_id: user.franchise_id })
+        }), franchise_id: user.franchise_id
+      })
       .skip(skip)
       .limit(limit);
 
@@ -95,7 +96,20 @@ const createCustomer = async (req, res) => {
       });
     } else {
       const user = await auth.getUserBytoken(req.headers.authorization);
+      if (!user.franchise_id) {
+        res.status(400).send({ message: 'Your Company is not onboarded' });
+        return
+      }
+      const exists = await customer.findOne({
+        mobile: req.body.mobile,
+        franchise_id: user.franchise_id
+      });
 
+      if (exists) {
+        return res.status(409).json({
+          message: "Customer already exists"
+        });
+      }
       let newCustomer = new customer({
         ...req.body,
         franchise_id: user.franchise_id,
@@ -214,6 +228,45 @@ const deleteCustomer = async (req, res) => {
     res.status(400).send();
   }
 };
+
+const bulkDelete = async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        errors: errors.array().map((d) => {
+          return { error: d.msg };
+        }),
+      });
+    } else {
+      try {
+        const { ids } = req.body;
+
+        if (ids.length == 0) {
+          res.status(400).send({
+            failed: true,
+            message: 'Customers id required!'
+          });
+        }
+
+        const result = await customer.deleteMany({
+          _id: { $in: ids }
+        });
+
+        res.json({
+          success: true,
+          deletedCount: result.deletedCount
+        });
+      } catch (err) {
+        res.status(500).json({ error: err.message });
+      }
+    }
+  } catch (err) {
+    console.log(err);
+
+    res.status(500).send({ message: err });
+  }
+};
 module.exports = {
   getCustomerList,
   createCustomer,
@@ -222,4 +275,5 @@ module.exports = {
   deleteCustomer,
   getCustomerWithoutPagination,
   bulkImportCustomer,
+  bulkDelete
 };

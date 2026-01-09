@@ -6,4 +6,9 @@ const customer_validations = () => {
     check("mobile", "mobile required").notEmpty(),
   ];
 };
-module.exports = { customer_validations };
+const customer_bulk_validations = () => {
+  return [
+    check("ids", "ids required").notEmpty(),
+  ];
+};
+module.exports = { customer_validations,customer_bulk_validations };

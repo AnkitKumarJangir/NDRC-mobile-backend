@@ -3,9 +3,12 @@ const otp = require("../models/user-otp");
 const jwt = require("jsonwebtoken");
 const { validationResult } = require("express-validator");
 const mailer = require("../controllers/mailer");
+const helper = require("../controllers/helper");
 var ObjectId = require("mongodb").ObjectID;
 
 const bcrypt = require("bcryptjs");
+
+
 const loginUser = (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -39,14 +42,73 @@ const loginUser = (req, res, next) => {
         var token = jwt.sign({ id: user.id }, process.env.JWT_SECRET_KEY, {
           expiresIn: 86400, // 24 hours
         });
-        delete user["password"];
+        const data = user.toObject()
+        delete data.password
         res.status(200).send({
-          data: user,
+          data: data,
           token: token,
         });
       });
   }
 };
+const signUp = async (req, res, next) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({
+      errors: errors.array().map((d) => {
+        return { message: d.msg };
+      }),
+    });
+  } else {
+
+    const { email, mobile, password } = req.body;
+
+    const existingUser = await login.findOne({
+      $or: [
+        { email: email },
+        { mobile: mobile }
+      ]
+    });
+
+    if (existingUser) {
+      return res.status(400).json({
+        message:
+          existingUser.email === email
+            ? "Email already registered"
+            : "Mobile number already registered"
+      });
+    }
+
+    let user = new login({
+      ...req.body,
+      username: mobile,
+      password: await bcrypt.hash(password, 10),
+      is_admin: true,
+      franchise_id: null,
+    });
+    user.save(async (err, doc) => {
+      if (err) {
+        res.status(400).send({ message: err });
+      } else {
+        const tem = helper.welcomeEmailTemplate().replace(/{{UserName}}/g, doc.username)
+          .replace(/{{user}}/g, doc.first_name)
+          .replace(/{{LoginURL}}/g, "ndrc-web-v2.onrender.com")
+          .replace(/{{SupportEmail}}/g, "fbd.ndrc@gmail.com")
+          .replace(/{{Year}}/g, new Date().getFullYear())
+        const obj = {
+          from: process.env.AUTH_EMAIL,
+          to: doc.email,
+          subject: "Welcome to NDRC",
+          html: tem,
+        };
+        const mail = await mailer.sendMail(obj);
+
+        res.status(200).send({ message: "singup successfully.", id: doc._id });
+      }
+    });
+  }
+};
+
 const changePassword = async (req, res) => {
   const errors = validationResult(req);
 
@@ -113,25 +175,47 @@ const getUser = async (req, res) => {
   });
 };
 const updateUserProfile = async (req, res) => {
-  const user = await getUserBytoken(req.headers.authorization);
-  if (!user) {
-    return res.status(400).send({
-      message: "Not found",
-    });
-  }
-  let payload = { ...req.body };
-  login.findByIdAndUpdate(
-    { _id: user._id },
-    { $set: payload },
-    { new: true },
-    (err, doc) => {
-      if (err) {
-        return res.status(400).send({ message: "Not found" });
-      } else {
-        res.send({ message: "Profile updated successfully" });
+  try {
+    const user = await getUserBytoken(req.headers.authorization);
+    if (!user) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const payload = { ...req.body };
+
+
+    if (
+      payload.mobile &&
+      payload.mobile !== user.mobile
+    ) {
+      payload.username = payload.mobile;
+      const exist = await login.findOne({ mobile: payload.mobile });
+      if (exist) {
+        return res.status(400).json({ message: "User already exist with this mobile number." });
       }
     }
-  );
+
+    const updatedUser = await login.findByIdAndUpdate(
+      user._id,
+      { $set: payload },
+      { new: true, runValidators: true }
+    ).lean()
+
+    if (!updatedUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    delete updatedUser['password']
+    return res.status(200).json({
+      message: "Profile updated successfully",
+      data:updatedUser
+    });
+
+  } catch (error) {
+    return res.status(500).json({
+      message: "Internal server error",
+      error
+    });
+  }
 };
 async function getUserBytoken(token) {
   let userId;
@@ -194,21 +278,17 @@ const sendOtp = async (req, res) => {
            </div>
            </div>`,
         };
-        otp.deleteOne({ user_id: doc._id }, (err, data) => {});
+        otp.deleteOne({ user_id: doc._id }, (err, data) => { });
         let payload = new otp({
           user_id: doc._id,
           otp: generated_otp,
           is_verified: false,
         });
-        console.log(payload);
         payload.save(async (err, otp_in) => {
           if (err) {
-            console.log(err);
             res.status(400).send("not found");
           } else {
-            console.log("data", otp_in);
             const mail = await mailer.sendMail(obj);
-            console.log(mail);
             res.send({ message: "sent OTP successfully ", email: doc.email });
           }
         });
@@ -241,7 +321,7 @@ const verifyOtp = async (req, res) => {
                 { user_id: doc._id },
                 { $set: payload },
                 { new: true },
-                (err, doc) => {}
+                (err, doc) => { }
               );
               res.send({ message: "OTP verified successfully" });
             } else {
@@ -284,7 +364,7 @@ const resetPassword = async (req, res) => {
                   console.log(doc);
                 }
               );
-              otp.deleteOne({ user_id: user._id }, (err, data) => {});
+              otp.deleteOne({ user_id: user._id }, (err, data) => { });
               res.send({ message: "success" });
             } else {
               res.status(400).send({ message: "OTP not verified" });
@@ -306,5 +386,6 @@ module.exports = {
   updateUserProfile,
   sendOtp,
   verifyOtp,
+  signUp,
   resetPassword,
 };

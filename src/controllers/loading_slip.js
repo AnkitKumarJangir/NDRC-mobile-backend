@@ -7,65 +7,54 @@ const ExcelJS = require("exceljs");
 
 const auth = require("./auth");
 const moment = require("moment");
+const company = require("../models/company");
 // create new slip
 async function createLoadingSlip(req, res, next) {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({
-      errors: errors.array().map((d) => {
-        return { message: d.msg };
-      }),
-    });
-  } else {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        errors: errors.array().map(e => ({ message: e.msg }))
+      });
+    }
+
     const user = await auth.getUserBytoken(req.headers.authorization);
-    // const companyEmail = await comPController.getCompanyEmail(
-    //   req.headers.authorization
-    // );
-    let clt = new loadingSlip({
-      s_no: req.body.s_no,
-      date: req.body.date,
-      customer: req.body.customer,
-      address: req.body.address,
-      trailor_no: req.body.trailor_no,
-      from: req.body.from,
-      to: req.body.to,
-      goods: req.body.goods,
-      freight: req.body.freight,
-      p_m_t: req.body.p_m_t,
-      fine: req.body.fine,
-      detain: req.body.detain,
-      size: req.body.size,
-      l: req.body.l,
-      w: req.body.w,
-      h: req.body.h,
-      weight: req.body.weight,
-      guarantee: req.body.guarantee,
-      advance: req.body.advance,
-      balance: req.body.balance,
-      description: req.body.description,
-      created_by: user ? user.username : "",
-      franchise_id: user.franchise_id,
+    if (!user) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    if (!user.franchise_id) {
+      return res.status(400).json({
+        message: "Your company is not onboarded"
+      });
+    }
+
+    const companyDoc = await company.findOneAndUpdate(
+      { _id: user.franchise_id },
+      { $inc: { serial_no: 1 } },
+      { new: true }
+    );
+
+    if (!companyDoc) {
+      return res.status(404).json({ message: "Company not found" });
+    }
+
+    const loadingSlipDoc = await loadingSlip.create({
+      ...req.body,
+      created_by: user.username,
+      franchise_id: user.franchise_id
     });
-    clt.save(async (err, doc) => {
-      if (err) {
-        res.status(400).send({ message: err });
-      } else {
-        // const tem = await emailTemplate(
-        //     "created",
-        //     companyEmail,
-        //     doc.s_no,
-        //     user.username
-        //   ),
-        //   obj = {
-        //     from: process.env.AUTH_EMAIL,
-        //     to: companyEmail,
-        //     subject: "Loading slip",
-        //     html: tem,
-        //     // html: `<h1 style="color:red;">loading slip with serial number ${doc.s_no} is created by ${user.username}</h1>`,
-        //   };
-        // const mail = await mailer.sendMail(obj);
-        res.send({ message: "successfully created", id: doc._id });
-      }
+
+    return res.status(201).json({
+      message: "Loading slip created successfully",
+      id: loadingSlipDoc._id
+    });
+
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      message: "Internal server error",
+      error
     });
   }
 }
@@ -80,7 +69,7 @@ const getLoadingSlips = async (req, res) => {
     const skip = (page - 1) * limit;
 
     // Query for result
-    const list = await loadingSlip
+    let list = await loadingSlip
       .find({
         ...(req.query.search && {
           $or: [
@@ -93,24 +82,25 @@ const getLoadingSlips = async (req, res) => {
         }),
         ...(req.query.start_date &&
           req.query.end_date && {
-            date: {
-              $gte: moment(new Date(req.query.start_date)).format("DD-MM-yyyy"),
-              $lte: moment(new Date(req.query.end_date)).format("DD-MM-yyyy"),
-            },
-          }),
+          date: {
+            $gte: moment(new Date(req.query.start_date)).format("DD-MM-yyyy"),
+            $lte: moment(new Date(req.query.end_date)).format("DD-MM-yyyy"),
+          },
+        }),
         franchise_id: user.franchise_id,
       })
       .populate("customer", ["_id", "name"])
       .skip(skip)
-      .limit(limit);
+      .limit(limit).lean();
 
-    const response = list;
+    const response = list?.map((d) => ({ ...d, customer_name: d?.customer?.name }))
+
     // export excel
     if (req.query.export && req.query.export == "yes") {
       const columns = [
         { header: "S. No.", key: "s_no", width: 15 },
         { header: "Date", key: "date", width: 15 },
-        { header: "Party", key: "party", width: 30 },
+        { header: "Party", key: "customer_name", width: 30 },
         { header: "Address", key: "address", width: 30 },
         { header: "Trailor No.", key: "trailor_no", width: 15 },
         { header: "From", key: "from", width: 15 },
@@ -128,9 +118,12 @@ const getLoadingSlips = async (req, res) => {
         { header: "Advance", key: "advance", width: 25 },
         { header: "Balance", key: "balance", width: 25 },
       ];
+
+
       helper.exportAsExcel(res, response, columns);
       return;
     }
+
     // pagination
     const count = list.length;
     const { next, previous } = helper.pagination(req, count, page, limit);
@@ -163,7 +156,7 @@ const getSingleLoadingSlips = async (req, res) => {
         res.send(doc);
       }
     }
-  ).populate('customer',["_id","name"])
+  ).populate('customer', ["_id", "name"])
 };
 // update one
 const updateLoadingSlips = async (req, res) => {
@@ -199,15 +192,10 @@ const updateLoadingSlips = async (req, res) => {
         advance: req.body.advance,
         balance: req.body.balance,
         created_date: req.body.created_date,
-
         updated_date: moment().format("YYYY-MM-DD"),
         franchise_id: user.franchise_id,
         created_by: req.body.user_name,
       };
-
-      // const companyEmail = await comPController.getCompanyEmail(
-      //   req.headers.authorization
-      // );
       loadingSlip.findOneAndUpdate(
         { _id: req.params.id },
         { $set: payload },
@@ -217,17 +205,17 @@ const updateLoadingSlips = async (req, res) => {
             return res.status(400).send({ message: "Not found" });
           } else {
             // const tem = await emailTemplate(
-            //     "updated",
-            //     companyEmail,
-            //     doc.s_no,
-            //     user.username
-            //   ),
-            //   obj = {
-            //     from: process.env.AUTH_EMAIL,
-            //     to: companyEmail,
-            //     subject: "Loading slip",
-            //     html: tem,
-            //   };
+            //   "updated",
+            //   companyEmail,
+            //   doc.s_no,
+            //   user.username
+            // );
+            // const obj = {
+            //   from: process.env.AUTH_EMAIL,
+            //   to: companyEmail,
+            //   subject: "Loading slip",
+            //   html: tem,
+            // };
             // const mail = await mailer.sendMail(obj);
             res.send({ message: "updated successfully", id: doc._id });
           }
@@ -242,27 +230,24 @@ const updateLoadingSlips = async (req, res) => {
 const deleteLoadingSlips = async (req, res) => {
   if (req.params.id) {
     const user = await auth.getUserBytoken(req.headers.authorization);
-    // const companyEmail = await comPController.getCompanyEmail(
-    //   req.headers.authorization
-    // );
+
     loadingSlip.findOneAndDelete({ _id: req.params.id }, async (err, doc) => {
       if (err) {
         return res.status(400).send({ message: "Not found" });
       } else {
         // const tem = await emailTemplate(
-        //     "deleted",
-        //     companyEmail,
-        //     doc?.s_no,
-        //     user.username
-        //   ),
-        //   obj = {
-        //     from: process.env.AUTH_EMAIL,
-        //     to: companyEmail,
-        //     subject: "Loading slip",
-        //     html: tem,
-        //   };
+        //   "deleted",
+        //   companyEmail,
+        //   doc.s_no,
+        //   user.username
+        // );
+        // const obj = {
+        //   from: process.env.AUTH_EMAIL,
+        //   to: companyEmail,
+        //   subject: "Loading slip",
+        //   html: tem,
+        // };
         // const mail = await mailer.sendMail(obj);
-
         res.send({ message: "successfully deleted" });
       }
     });
@@ -273,19 +258,13 @@ const deleteLoadingSlips = async (req, res) => {
 // get serial number
 const getLoadingSlipsSerialNo = async (req, res) => {
   const user = await auth.getUserBytoken(req.headers.authorization);
-  loadingSlip.find({ franchise_id: user.franchise_id }, (err, doc) => {
-    if (err) {
-      return res.status(400).send({ message: err });
-    } else {
-      if (doc?.length) {
-        let collection = doc.sort((a, b) => b.s_no - a.s_no);
-        let lastNumber = collection[0].s_no;
-        res.send({ serial_number: lastNumber + 1 });
-      } else {
-        res.send({ serial_number: 1001 });
-      }
-    }
-  });
+
+  const franchise = await company.findOne({ _id: user.franchise_id });
+  if (!franchise && !franchise.serial_no) {
+    return res.send(400).json({ message: 'Serial No. not configured with your Farm.' })
+  }
+  return res.send({ serial_number: franchise.serial_no + 1 })
+
 };
 
 function emailTemplate(action, email, s_no, userName) {

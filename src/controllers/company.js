@@ -16,47 +16,55 @@ const getFranchiseDetails = async (req, res) => {
     }
   });
 };
-const createFranchise = async (req, res) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({
-      errors: errors.array().map((d) => {
-        return { message: d.msg };
-      }),
-    });
-  } else {
-    const user = await auth.getUserBytoken(req.headers.authorization);
-    if (!user) {
-      return res.status(400);
+const getSingleFranchise = async (req, res) => {
+  const user = await auth.getUserBytoken(req.headers.authorization);
+  if (!user) {
+    return res.status(400).send({ message: "not found" });
+  }
+  company.find({ _id: req.params.id }, (err, doc) => {
+    if (err) {
+      return res.status(400).send({ message: err });
+    } else {
+      res.send(doc[0]);
     }
-    let clt = new company({
-      company_name: req.body.company_name,
-      sub_title: req.body.sub_title,
-      description: req.body.description,
-      address: req.body.address,
-      company_email: req.body.company_email,
-      pan_no: req.body.pan_no,
-      contact: req.body.contact,
-    });
-    clt.save(async (err, doc) => {
-      if (err) {
-        res.status(400).send({ message: err });
-      } else {
-        let payload = {
-          franchise_id: doc._id,
-        };
-        login.findByIdAndUpdate(
-          { _id: user._id },
-          { $set: payload },
-          { new: true },
-          (err, log) => {
-            if (err) {
-              res.status(400).send({ message: err });
-            }
-            res.send(doc[0]);
-          }
-        );
+  });
+};
+const createFranchise = async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        errors: errors.array().map((d) => {
+          return { message: d.msg };
+        }),
+      });
+    } else {
+      const user = await auth.getUserBytoken(req.headers.authorization);
+      if (!user) {
+        return res.status(401).json({ message: "Unauthorized" });
       }
+
+      const franchise = new company({
+        ...req.body
+      });
+
+      const savedFranchise = await franchise.save();
+      await login.findByIdAndUpdate(
+        user._id,
+        { $set: { franchise_id: savedFranchise._id } },
+        { new: true }
+      );
+
+      return res.status(201).json({
+        message: "Franchise created successfully",
+        data: savedFranchise
+      });
+    }
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      message: "Internal server error",
+      error
     });
   }
 };
@@ -71,34 +79,28 @@ const editCompany = async (req, res) => {
   } else {
     const user = await auth.getUserBytoken(req.headers.authorization);
     if (!user) {
-      return res.status(400);
+      return res.status(401).json({ message: "Unauthorized" });
     }
-    let clt = {
-      company_name: req.body.company_name,
-      sub_title: req.body.sub_title,
-      description: req.body.description,
-      address: req.body.address,
-      pan_no: req.body.pan_no,
-      company_email: req.body.company_email,
-      contact: req.body.contact,
-    };
-    console.log(user);
-    if (user.is_admin) {
-      company.findByIdAndUpdate(
-        { _id: user.franchise_id },
-        { $set: clt },
-        { new: true },
-        (err, doc) => {
-          if (err) {
-            return res.status(400).send({ message: err });
-          } else {
-            res.send(doc);
-          }
-        }
-      );
-    } else {
-      return res.status(400).send({ message: "You are not able to update" });
+
+    if (!user.is_admin) {
+      return res.status(403).json({
+        message: "You are not allowed to update company details"
+      });
     }
+    const updatedCompany = await company.findByIdAndUpdate(
+      user.franchise_id,
+      { $set: req.body },
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedCompany) {
+      return res.status(404).json({ message: "Company not found" });
+    }
+
+    return res.status(200).json({
+      message: "Company updated successfully",
+      data: updatedCompany
+    });
   }
 };
 const getCompanyEmail = async (token) => {
@@ -122,5 +124,6 @@ module.exports = {
   getFranchiseDetails,
   createFranchise,
   editCompany,
+  getSingleFranchise,
   getCompanyEmail,
 };
